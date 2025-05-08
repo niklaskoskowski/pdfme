@@ -1,37 +1,37 @@
-name: Build & Upload Artifact
+name: "Build and Zip Entire Repo"
 
 on:
   push:
-    branches: [ main ]
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
 
 jobs:
-  build_and_upload:
+  build-and-zip:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: 20
+          cache: 'npm'
 
-      - name: Install dependencies and build
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Vite project
+        run: npm run build
+
+      - name: Zip entire repository
         run: |
-          npm ci
-          npm run build
+          zip -r build.zip . -x "*/.git/*" "build.zip"
 
-      - name: Zip build folder
-        run: |
-          if [ ! -d dist ]; then
-            echo "❌ dist/ directory not found; check your build script" >&2
-            exit 1
-          fi
-          zip -r build.zip dist/
-
-      - name: Upload build.zip
-        uses: actions/upload-artifact@v2    # ← pin to v2 here
+      - name: Upload build ZIP
+        uses: actions/upload-artifact@v3
         with:
-          name: pdfme-app-build
+          name: full-repo-zip
           path: build.zip
