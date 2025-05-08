@@ -1,0 +1,52 @@
+# .github/workflows/build-and-zip.yml
+name: Build, Zip & Deploy
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build_and_zip:
+    runs-on: ubuntu-latest
+    steps:
+      # 1. Check out your code
+      - uses: actions/checkout@v3
+
+      # 2. Set up Node.js
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      # 3. Install dependencies & run your build
+      - run: |
+          npm ci
+          npm run build       # ← your build script should output to ./dist
+
+      # 4. Zip the build output
+      - run: |
+          cd dist
+          zip -r ../build.zip .  # compress everything in dist into build.zip
+        working-directory: .
+
+      # 5. Upload the ZIP as an artifact
+      - name: Upload build.zip
+        uses: actions/upload-artifact@v3
+        with:
+          name: pdfme-app-build
+          path: build.zip
+
+  deploy:
+    needs: build_and_zip
+    runs-on: ubuntu-latest
+    if: ${{ github.ref == 'refs/heads/main' }}
+    steps:
+      - uses: actions/checkout@v3
+      - name: Download build.zip from previous job
+        uses: actions/download-artifact@v3
+        with:
+          name: pdfme-app-build
+      - name: Extract & Deploy via SFTP
+        run: |
+          unzip build.zip -d deploy-folder
+          rsync -avz deploy-folder/ ${{ secrets.SFTP_USER }}@${{ secrets.SFTP_HOST }}:/path/on/server
+        # or swap in your preferred deploy method (FTP, SCP, Docker push, etc.)
