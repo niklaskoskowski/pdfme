@@ -28,10 +28,11 @@ jobs:
 
       - name: Zip entire repository
         run: |
+          # Exclude .git directory and the generated zip itself
           zip -r build.zip . -x "*/.git/*" "build.zip"
 
       - name: Upload build ZIP
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: full-repo-zip
           path: build.zip
