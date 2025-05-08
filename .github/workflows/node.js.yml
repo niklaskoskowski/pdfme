@@ -9,35 +9,29 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Check out your code
       - name: Checkout repo
         uses: actions/checkout@v3
 
-      # 2. Set up Node.js
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '18'
 
-      # 3. Install deps & build
       - name: Install dependencies and build
         run: |
           npm ci
           npm run build
 
-      # 4. Zip the build output
       - name: Zip build folder
         run: |
-          # make sure your build script outputs into ./dist
           if [ ! -d dist ]; then
             echo "❌ dist/ directory not found; check your build script" >&2
             exit 1
           fi
           zip -r build.zip dist/
 
-      # 5. Upload the ZIP as an artifact
       - name: Upload build.zip
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v2    # ← pin to v2 here
         with:
-          name: pdfme-app-build    # <-- this will appear under Artifacts
-          path: build.zip          # <-- this file must exist at the repo root
+          name: pdfme-app-build
+          path: build.zip
